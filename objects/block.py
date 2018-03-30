@@ -1,4 +1,3 @@
-
 class Block:
     '''
     A generic block for lazor.  We make this extendable so that it can be
@@ -8,10 +7,19 @@ class Block:
         (b) Opaque block - Absorbs the laser
         (c) See-Through block - Both reflects and lets light pass
     '''
-    def __init__(self):
+
+    def __init__(self, name):
         '''
         Difficulty 1
 
         DONT FORGET TO COMMENT!
         '''
-        pass
+        self.name = name
+        self.property = {'A':'reflect', 'B': 'absorb', 'C': 'reflect and through', 'o': 'allow', 'x': 'not allow'}
+
+    def __repr__(self):
+        '''
+
+        :return:
+        '''
+        return str(self.name)

@@ -1,6 +1,12 @@
 import sys
 import copy
 import itertools
+import os
+import point as pt
+import block as blk
+import laser as lsr
+
+
 # import the Point, Block, and Laser objects
 
 
@@ -29,11 +35,11 @@ class Game:
                 This game object.
         '''
         self.fname = fptr
-        self.read(fptr)
+        self.read()
 
     # DO SOMETHING HERE SO WE CAN PRINT A REPRESENTATION OF GAME!
 
-    def read(self, fptr):
+    def read(self):
         '''
         Difficulty 3
 
@@ -46,9 +52,44 @@ class Game:
 
         **Returns**
 
-            None
+            self.blocks, self_available_space: *tuple*
+                                             The list representation of the initial board to be used.
         '''
-        pass
+        os.chdir('../boards')
+        with open(self.fname, 'r') as fptr:
+            # Find a representation of the board.
+            content = fptr.readlines()
+            grid_start = ''.join(line for line in content if line.startswith('GRID START'))
+            grid_end = ''.join(line for line in content if line.startswith('GRID STOP'))
+            grid = [blk.Block(n) for col in content[content.index(grid_start) + 1: content.index(grid_end)] for n in
+                    col.split()]
+
+            self.blocks = [line.split()[0] * int(line.split()[1]) for line in content if
+                           (line.startswith('A') or line.startswith('B') or line.startswith('C')) and len(
+                               line.split()) == 2]
+
+            self.blocks = [blk.Block(block) for _type in self.blocks for block in _type]
+
+            fixed_blocks = [(block, index) for index, block in enumerate(grid) if block.name in ('A', 'B', 'C')]
+
+            self.available_space = len([space for space in grid if space.name not in ('A', 'B', 'C', 'x')])
+
+            self.points = [(int(line.split()[1]), int(line.split()[2])) for line in content if line.startswith('P')]
+            self.lasers = [
+                lsr.Laser((int(line.split()[1]), int(line.split()[2])), (int(line.split()[3]), int(line.split()[4]))) for
+                line in content if line.startswith('L')]
+
+            print(grid)
+            print(fixed_blocks)
+            print('Blocks are %s' % (self.blocks))
+            print len(self.blocks)
+            print('Number of available space: %s ' % self.available_space)
+            print('Points are %s' % (self.points))
+            print('Lasers are %s' % (self.lasers))
+
+        fptr.close()
+
+        # return self.blocks, self.available_space
 
     def generate_boards(self):
         '''
@@ -92,7 +133,7 @@ class Game:
         boards = []
 
         # YOUR CODE HERE
-        pass
+        print 'Partitions\n' % partitions
 
     def set_board(self, board):
         '''
@@ -125,44 +166,61 @@ class Game:
 
             None
         '''
-        # YOUR CODE HERE
-        pass
+        # with open('board.txt', 'w') as fptr:
+        #     for rows in self.init_board:
+        #         for col in rows:
+        #             fptr.write(col)
+        #         fptr.write('\n')
+        #
+        # fptr.close()
 
-    def run(self):
-        '''
-        Difficulty 3
 
-        The main code is here.  We call the generate_boards function, then we
-        loop through, using set_board to assign a board, "play" the game,
-        check if the board is the solution, if so save_board, if not then
-        we loop.
+def run(self):
+    '''
+    Difficulty 3
 
-        **Returns**
+    The main code is here.  We call the generate_boards function, then we
+    loop through, using set_board to assign a board, "play" the game,
+    check if the board is the solution, if so save_board, if not then
+    we loop.
 
-            None
-        '''
+    **Returns**
 
-        # Get all boards
-        print("Generating all the boards..."),
-        sys.stdout.flush()
-        boards = self.generate_boards()
-        print("Done")
-        sys.stdout.flush()
+        None
+    '''
 
-        print("Playing boards...")
-        sys.stdout.flush()
-        # Loop through the boards, and "play" them
-        for b_index, board in enumerate(boards):
-            # Set board
-            self.set_board(board)
+    # Get all boards
+    print("Generating all the boards..."),
+    sys.stdout.flush()
+    boards = self.generate_boards()
+    print("Done")
+    sys.stdout.flush()
 
-            # MAYBE MORE CODE HERE?
+    print("Playing boards...")
+    sys.stdout.flush()
+    # Loop through the boards, and "play" them
+    for b_index, board in enumerate(boards):
+        # Set board
+        self.set_board(board)
 
-            # LOOP THROUGH LASERS
-            for j, laser in enumerate(current_lasers):
-              child_laser = None
-              child_laser = laser.update(self.board, self.points)
+        # MAYBE MORE CODE HERE?
+        current_lasers = [lsr.Laser(laser) for laser in self.lasers]
 
-            # MAYBE MORE CODE HERE?
+        # LOOP THROUGH LASERS
+        # for j, laser in enumerate(current_lasers):
+        #     child_laser = None
+        #     child_laser = laser.update(self.board, self.points)
 
-            # CHECKS HERE
+        # MAYBE MORE CODE HERE?
+
+        # CHECKS HERE
+        points = [pt.Point(point).pos for point in self.points]
+        for laser in current_lasers:
+            new_laser = laser.update(board, points)
+            if new_laser is not None:
+                current_lasers.append(new_laser)
+
+
+g = Game('diagonal_8.input')
+g.generate_boards()
+# g.save_board()

@@ -8,7 +8,7 @@ This solution can accommodate three types of blocks:
  B - Absorb
  C - Reflect and See-through
  ```
- And are thus good for the first 14 series of games (Tutorial - Grande).
+ And are thus good for the first 14 series of the lazor game (Tutorial - Grande).
 
  ## Tests
 

@@ -103,14 +103,14 @@ class Game:
                                              (line[0] in ('A', 'B', 'C')) and len(line.split()) == 2]
                           for block in block_read]
 
-        # Read in the fixed blocks.
+        # Read in fixed blocks.
         fixed_blocks = [(block, index) for index, block in enumerate(grid) if block.name in ('A', 'B', 'C', 'x')]
 
         # Get the positions of all the fixed blocks.
         fixed_pos = [block[1] for block in fixed_blocks]
 
         # Find all available positions for the movable blocks.
-        # Positions contain the fixed blocks are excluded.
+        # Positions of the fixed blocks are excluded.
         available_pos = [pos for pos in range(total_space) if pos not in fixed_pos]
 
         # Find all combinations of available positions to put in the exact amount of movable blocks.
@@ -134,7 +134,6 @@ class Game:
         for board, perm in zip(boards, pos_permutations):
             for block, index in perm:
                 board[index] = block
-            for block, index in fixed_blocks:
                 board[index] = block
 
         return boards
@@ -157,7 +156,7 @@ class Game:
                 are filled with Block objects, including None.
         '''
 
-        # Initialize the board with Block 'None'.
+        # Initialize the board with None blocks.
         none = blk.Block('None')
         board_to_play = [[none for col in range(2 * self.board_col + 1)]
                          for row in range(2 * self.board_row + 1)]
@@ -189,12 +188,12 @@ class Game:
             None
         '''
 
-        # Remove all the 'None' blocks from the board.
+        # Remove all the None blocks from the board.
         final_board = [[block for block in row if block.name != 'None'] for row in board[1::2]]
         for row in final_board:
             print row
 
-        # Save the board to a txt file. Could be turned on manually.
+        # The option to save the board to a txt file. Could be turned on manually.
         if save_to_file:
             with open('{}_soln.txt'.format(self.fname.split('.')[0]), 'w') as outfile:
                 outfile.write('Solution: \n')
@@ -252,7 +251,7 @@ class Game:
                     # combinations of A and C blocks.
                     # The time for a laser to loop through the entire board is on the order
                     # of 10^(-5) sec. Here the cutoff is set to 10^(-3) sec. If this limit
-                    # is reachesd, this board fails.
+                    # is reached, this board fails.
                     t1 = time.time()
                     if t1 - t0 > 0.001:
                         self.lasers = []

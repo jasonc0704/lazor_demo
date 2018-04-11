@@ -59,6 +59,6 @@ class Block:
         **Returns**
 
             hash: *int*
-                The hash value of hte name of the block objects.
+                The hash value of the name of the block objects.
         '''
         return hash(self.name)

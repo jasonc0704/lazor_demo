@@ -48,7 +48,6 @@ class Block:
 
             *boolean*
                 Checks whether two block objects have the same name.
-
         '''
         return self.name == other.name
 

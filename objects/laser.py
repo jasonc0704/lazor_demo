@@ -1,83 +1,158 @@
-import block
-import point
-
+#!/usr/bin/env python
 
 class Laser:
     '''
-    The Laser.  We need to store both the starting position and direction of
+    The Laser. We need to store both the starting position and direction of
     the laser.
     '''
 
     def __init__(self, pos, dirc):
         '''
-        Difficulty 1
+        Creates the laser objects.
 
-        DONT FORGET TO COMMENT!
+        **Parameters**
+
+            pos: *tuple*
+                A tuple (x, y) representing the coordinates of the laser. (Referred as 'position' thereafter)
+            dirc: *tuple*
+                A tuple (x, y) representing the direction of the laser. (Referred as 'direction' thereafter)
+                Due to the nature of the game, dirc can only have 4 values, namely
+                (1, 1), (1, -1), (-1, 1) and (-1, -1).
         '''
         self.pos = pos
         self.dirc = dirc
 
     def __repr__(self):
         '''
+        Creates a string representation of the laser objects.
 
-        :return:
+        **Parameters**
+
+            None
+
+        **Returns**
+
+            repr: *str*
+                String representation of the laser objects.
         '''
-        return 'L %s %s' % (self.pos, self.dirc)
-
-    # MORE
-    # Difficulty 4
+        return 'Laser({}, {})'.format(self.pos, self.dirc)
 
     @staticmethod
-    def reflection_x(dirc):
+    def reflect(dirc, nei):
         '''
+        Reflects the direction of the incoming laser according to the position of its neighbour block.
+        If the neighbour is above/below the laser, then reflect the direction along y axis.
+        If the neighbour is to the left/right of the laser, then reflect the direction along x axis.
 
-        :param dirc:
-        :return:
+        **Parameters**
+
+            dirc: *tuple*
+                Direction of the laser.
+            nei: *tuple*
+                Position of the neighbour block relative to the laser.
+
+        **Returns**
+
+            new_dirc: *tuple*
+                The reflected direction.
         '''
         x, y = dirc
-        return (-x, y)
+        if nei[0] == 0:
+            return (x, -y)
+        if nei[1] == 0:
+            return (-x, y)
 
     @staticmethod
-    def reflection_y(dirc):
+    def move(pos, dirc):
         '''
+        Moves the position of the laser one step along the current direction.
 
-        :param dirc:
-        :return:
+        **Parameters**
+
+            pos: *tuple*
+                Position of the laser.
+            dirc: *tuple*
+                Direction of the laser.
+
+        **Returns**
+
+            new_pos: *tuple*
+                New position of the laser after movement.
         '''
-        x, y = dirc
-        return (x, -y)
+        return (pos[0] + dirc[0], pos[1] + dirc[1])
 
     def update(self, board, points):
-        neighbours = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        for neigb in neighbours:
-            if board[self.pos[0] + neigb[0]][self.pos[1] + neigb[1]] == block.Block('A') and neigb[0] == 0:
-                self.dirc = self.reflection_y(self.dirc)
-            if board[self.pos[0] + neigb[0]][self.pos[1] + neigb[1]] == block.Block('A') and neigb[1] == 0:
-                self.dirc = self.reflection_x(self.dirc)
-            if board[self.pos[0] + neigb[0]][self.pos[1] + neigb[1]] == block.Block('B'):
-                self.pos = None
-                self.dirc = None
-            if board[self.pos[0] + neigb[0]][self.pos[1] + neigb[1]] == block.Block('C') and neigb[0] == 0:
-                new_laser = Laser(self.pos, self.dirc)
-                self.dirc = self.reflection_y(self.dirc)
-            if board[self.pos[0] + neigb[0]][self.pos[1] + neigb[1]] == block.Block('A') and neigb[1] == 0:
-                new_laser = Laser(self.pos, self.dirc)
-                self.dirc = self.reflection_x(self.dirc)
+        '''
+        Updates the board by checking
+        (1) all lasers are maintained within the boundary of the board;
+        (2) intersection of the laser(s) with the points;
+        (3) two neighbours in the forward direction of the lasers
+        and acting according to the block types at those positions (if applicable).
+        If the laser runs into A, then it is reflected, and nothing is generated;
+        if the laser runs into B, then it is absorbed, and thus will be deleted;
+        if the laser runs into C, then it passes through, but also generates a child laser whose direction
+        is inherits that of the current one.
 
-        return new_laser
+        **Parameters**
 
+            board: *list, Block*
+                The list of block objects representing the board, as generated in game.py
+            points: *list*
+                A list of tuples for all the positions of the points to be intersected with.
 
+        **Returns**
 
-pos1 = (2, 7)
-dir1 = (1, -1)
-pos2 = (4, 5)
-dir2 = (-1, -1)
-all_lasers = [Laser(pos1, dir1), Laser(pos2, dir2)]
-laser1 = all_lasers[0]
+            child_laser: *tuple* or *boolean: False* or *None*
+                New position and direction of the laser after the update.
+                If the update indicates a particular board run fails, then returns False.
+                If no new laser is generated, then returns None.
+        '''
 
-if __name__ == '__main__':
-    print laser1.dirc
+        # Check the intersection of the laser with the points,
+        # and deletes the one intersected in the previous step.
+        for pt in points:
+            if pt.check_intersection(self.pos):
+                points.remove(pt)
 
-    print laser1.reflection_x((-1, 2))
-    print laser1.reflection_y((-1, 2))
+        # Find the two neighbours along the forward direction of the laser.
+        neighbours = [(self.dirc[0], 0), (0, self.dirc[1])]
 
+        for nei in neighbours:
+            # First check if the position of the laser is within the boundary of the board.
+            # Because of the existence of negative index in lists,
+            # it is necessary to ensure that coordinates are all positive.
+            try:
+                assert self.pos[0] + nei[0] >= 0 and self.pos[1] + nei[1] >= 0
+            except AssertionError:
+                child_laser = False
+                break
+
+            try:
+                pos_to_chk = board[self.pos[0] + nei[0]][self.pos[1] + nei[1]].name
+            except IndexError:
+                child_laser = False
+                break
+
+            # Check the block type at the neighbour position and act accordingly.
+            if pos_to_chk == 'A':
+                child_laser = None
+                self.dirc = self.reflect(self.dirc, nei)
+                break
+
+            elif pos_to_chk == 'B':
+                child_laser = False
+                break
+
+            elif pos_to_chk == 'C':
+                child_laser = ((self.pos[0] + self.dirc[0], self.pos[1] + self.dirc[1]), self.dirc)
+                self.dirc = self.reflect(self.dirc, nei)
+                break
+
+            else:
+                child_laser = None
+
+        # Move the laser at the end of each step.
+        self.pos = self.move(self.pos, self.dirc)
+
+        # Finally, return the result.
+        return child_laser

@@ -56,11 +56,19 @@ class Game:
             content = [line for line in infile.readlines() if line != '\n']
 
             # Read in the point and laser objects.
+            # Return an error if no point or laser is defined.
             points_read = [pt.Point((int(line.split()[2]), int(line.split()[1])))
                            for line in content if line[0] == 'P']
+
+            if points_read == []:
+                raise Exception('Error! No point defined.')
+
             lasers_read = [
                 lsr.Laser((int(line.split()[2]), int(line.split()[1])), (int(line.split()[4]), int(line.split()[3])))
                 for line in content if line[0] == 'L']
+
+            if lasers_read == []:
+                raise Exception('Error! No laser defined.')
 
         infile.close()
 
@@ -90,7 +98,11 @@ class Game:
                 grid_end = index
 
         # Convert all grid elements to block objects.
-        grid = [blk.Block(n) for col in content[grid_start + 1: grid_end] for n in col.split()]
+        # Return an error if starting and ending place for grid is not clear.
+        try:
+            grid = [blk.Block(n) for col in content[grid_start + 1: grid_end] for n in col.split()]
+        except UnboundLocalError:
+            raise Exception('Error! Please define the position of the grid.')
 
         # Calculate the total space on the board, and the number of rows and columns of the board.
         total_space = len(grid)
@@ -98,10 +110,14 @@ class Game:
         self.board_col = total_space / self.board_row
 
         # Read in movable blocks.
+        # Return an error if no movable block is found.
         movable_blocks = [blk.Block(block)
                           for block_read in [line.split()[0] * int(line.split()[1]) for line in content if
                                              (line[0] in ('A', 'B', 'C')) and len(line.split()) == 2]
                           for block in block_read]
+
+        if movable_blocks == []:
+            raise Exception('Error! No movable block defined.')
 
         # Read in fixed blocks.
         fixed_blocks = [(block, index) for index, block in enumerate(grid) if block.name in ('A', 'B', 'C', 'x')]
@@ -213,6 +229,9 @@ class Game:
             None
         '''
 
+        # Initialize
+        success = False
+
         # Get all boards
         print('Generating all the boards...')
         sys.stdout.flush()
@@ -259,8 +278,12 @@ class Game:
 
             else:
                 # The solution is found!
-                print 'Success!'
+                success = True
                 break
 
         # Finally, save the board.
-        self.save_board(current_board, save_to_file=False)
+        if success:
+            print 'Success!'
+            self.save_board(current_board, save_to_file=False)
+        else:
+            print 'No solution found. Please check your input board.'
